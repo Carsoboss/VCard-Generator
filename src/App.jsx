@@ -1,88 +1,89 @@
-import React, { useState, useEffect } from "react";
-import QRCode from "qrcode";
+import React, { useState } from 'react';
+import QRCode from 'qrcode.react';
+import './index.css';
+
 
 function App() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [qrCodeUrl, setQRCodeUrl] = useState("");
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phoneNumber: ''
+  });
 
-  useEffect(() => {
-    const generateQRCode = async () => {
-      const vcard = `BEGIN:VCARD
-VERSION:3.0
-N:${lastName};${firstName};;;
-FN:${firstName} ${lastName}
-TEL;TYPE=CELL:${phoneNumber}
-EMAIL;TYPE=INTERNET:${email}
-END:VCARD`;
+  const handleChange = (event) => {
+    setFormData({
+      ...formData,
+      [event.target.name]: event.target.value
+    });
+  }
 
-      try {
-        const qrCodeUrl = await QRCode.toDataURL(vcard, { width: 256 });
-        setQRCodeUrl(qrCodeUrl);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    generateQRCode();
-  }, [firstName, lastName, email, phoneNumber]);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+  }
 
   const downloadQRCode = () => {
-    const link = document.createElement("a");
-    link.download = `${firstName}_${lastName}.png`;
-    link.href = qrCodeUrl;
-    link.click();
-  };
+    const canvas = document.getElementById('qr-code');
+    const pngUrl = canvas.toDataURL("image/png");
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    downloadLink.download = `${formData.firstName}-${formData.lastName}-qr-code.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  }
 
   return (
-    <div>
-      <h1>QR Code Generator</h1>
-      <form>
-        <label>
-          First Name:
-          <input
-            type="text"
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-          />
-        </label>
-        <br />
-        <label>
-          Last Name:
-          <input
-            type="text"
-            value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
-          />
-        </label>
-        <br />
-        <label>
-          Email:
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
-        <br />
-        <label>
-          Phone Number:
-          <input
-            type="tel"
-            value={phoneNumber}
-            onChange={(event) => setPhoneNumber(event.target.value)}
-          />
-        </label>
+    <div className="App">
+      <h1 className="title">QR Code Generator</h1>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="firstName">First Name:</label>
+        <input
+          type="text"
+          id="firstName"
+          name="firstName"
+          value={formData.firstName}
+          onChange={handleChange}
+        />
+        <label htmlFor="lastName">Last Name:</label>
+        <input
+          type="text"
+          id="lastName"
+          name="lastName"
+          value={formData.lastName}
+          onChange={handleChange}
+        />
+        <label htmlFor="email">Email:</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+        />
+        <label htmlFor="phoneNumber">Phone Number:</label>
+        <input
+          type="tel"
+          id="phoneNumber"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+        />
+        <button type="button" onClick={downloadQRCode}>
+          Download QR Code
+        </button>
       </form>
-      {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" />}
-      {qrCodeUrl && (
-        <button onClick={downloadQRCode}>Download QR Code</button>
-      )}
+      <div className="qr-code-container">
+        <QRCode
+          id="qr-code"
+          value={`BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName} ${formData.lastName}\nEMAIL:${formData.email}\nTEL:${formData.phoneNumber}\nEND:VCARD`}
+          size={256}
+          level={"H"}
+          includeMargin={true}
+        />
+      </div>
     </div>
   );
 }
 
 export default App;
-
