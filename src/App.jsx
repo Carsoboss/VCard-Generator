@@ -1,61 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import QRCode from 'qrcode.react';
-import './App.css'; // Import your CSS file with class names here
+import { SketchPicker } from 'react-color';
+import download from 'downloadjs';
+import './App.css';
 
 function App() {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phoneNumber: ''
-  });
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [number, setNumber] = useState('');
+  const [qrFGColor, setQrFGColor] = useState('#000000');
+  const [qrBGColor, setQrBGColor] = useState('#ffffff');
+  const qrRef = useRef();
 
-  const handleChange = (event) => {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value
-    });
-  }
+  const vCardText = `BEGIN:VCARD
+VERSION:3.0
+N:${lastName};${firstName};;;
+TEL;TYPE=CELL:${number}
+EMAIL:${email}
+END:VCARD`;
 
-  const downloadQRCode = () => {
-    const canvas = document.getElementById('qr-code'); // Get the canvas element
-    const dataURL = canvas.toDataURL('image/png'); // Convert canvas to data URL
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = `${formData.firstName}_${formData.lastName}_qrcode.png`; // Set download name
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = () => {
+    const canvas = qrRef.current.querySelector("canvas");
+    const pngUrl = canvas.toDataURL("image/png");
+
+    download(pngUrl, `${firstName}_${lastName}.png`);
   }
 
   return (
-    <div className="App">
-      <h1 className="title">QR Code Generator</h1>
-      <form>
-        <label htmlFor="firstName">First Name</label>
-        <input type="text" id="firstName" name="firstName" onChange={handleChange} />
-        <label htmlFor="lastName">Last Name</label>
-        <input type="text" id="lastName" name="lastName" onChange={handleChange} />
-        <label htmlFor="email">Email</label>
-        <input type="email" id="email" name="email" onChange={handleChange} />
-        <label htmlFor="phoneNumber">Phone Number</label>
-        <input type="text" id="phoneNumber" name="phoneNumber" onChange={handleChange} />
-        <button type="button" onClick={downloadQRCode} className="form-button">
-          Download QR Code
-        </button>
-      </form>
-      <div className="qr-code-container">
+    <div className="app">
+      <h1>QR Code Generator</h1>
+      <div className="input-form">
+        <input type="text" placeholder="First Name" onChange={(e) => setFirstName(e.target.value)} />
+        <input type="text" placeholder="Last Name" onChange={(e) => setLastName(e.target.value)} />
+        <input type="text" placeholder="Email" onChange={(e) => setEmail(e.target.value)} />
+        <input type="text" placeholder="Number" onChange={(e) => setNumber(e.target.value)} />
+      </div>
+
+      <div className="color-pickers">
+        <div className="color-picker">
+          <p>QR Code Color</p>
+          <SketchPicker color={qrFGColor} onChange={(color) => setQrFGColor(color.hex)} />
+        </div>
+        <div className="color-picker">
+          <p>Background Color</p>
+          <SketchPicker color={qrBGColor} onChange={(color) => setQrBGColor(color.hex)} />
+        </div>
+      </div>
+
+      <div ref={qrRef}>
         <QRCode
-          id="qr-code" // Add an ID to the QRCode component for referencing
-          value={`BEGIN:VCARD\nVERSION:3.0\nFN:${formData.firstName} ${formData.lastName}\nEMAIL:${formData.email}\nTEL:${formData.phoneNumber}\nEND:VCARD`}
-          size={256}
-          fgColor="#000000"
-          bgColor="#FFFFFF"
-          className="qr-code"
+          value={vCardText}
+          size={200}
+          fgColor={qrFGColor}
+          bgColor={qrBGColor}
+          renderAs="canvas"
         />
       </div>
+
+      <button onClick={handleDownload}>Download QR</button>
     </div>
   );
 }
 
 export default App;
+
